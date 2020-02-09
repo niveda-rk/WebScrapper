@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AWS Read Notes Out Loud</title>
+    <!-- based on content from https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-started-browser.html and https://docs.aws.amazon.com/rekognition/latest/dg/image-bytes-javascript.html -->
+    <style>
+      * {
+        font-family: sans-serif;
+      }
+      main {
+        max-width: 700px;
+        width: 90%;
+        margin: 0 auto;
+      }
+      p {
+        font-size: 16px;
+        line-height: 1.45;
+        color: white;
+      }
+      .cover {
+        width: 8vw;
+        position: relative;
+        left: 0px;
+        top: 0px;
+        height: 100px;
+        object-fit: cover;
+        z-index: -1;
+        margin-top: 70px;
+      }
+      body {
+        background-color: darkgreen;
+      }
+      h1 {
+        font-size: 50px;
+        margin-top: 5px;
+        color: white;
+      }
+      #tweet {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background: white;
+        border-radius: 100%;
+        cursor: pointer;
+      }
+      #book img {
+        height: 8px;
+        width: 8px;
+      }
+    </style>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body style="text-align: center">
+
+    <hr>
+
+    <img
+        class="cover"
+        src="https://openmoji.org/data/color/svg/1F4D6.svg"
+      />
+
+    <br>
+    <br>
+    <div id="pollyContent">
+      <h1>Read Notes Out Loud</h1>
+      
+      <div id="textToSynth">
+        <input size="80" type="text" id="textEntry" value="/Users/"/>
+        <button class="btn default" onClick="speakText()">Eureka</button>
+        <p id="result">Enter file directory where image is stored above then click Eureka</p>
+      </div>
+
+      <br>
+     
+      <div id="textToSynth">
+        <textarea cols="80" rows="15" type="text" id="pollyTextEntry" placeholder="Enter notes" style="font-size : 13px;">Read Notes Out Loud</textarea>
+        <embed src="test.txt">;
+
+        <br>
+        <br>
+        <button class="btn default" onClick="speakText()" style="font-size : 16px; width: 10%; height: 24px;">Synthesize</button>
+        <br>
+        <br>
+                
+        <p id="pollyResult">Enter text above then click Synthesize</p>
+        <br>
+      </div>
+      <audio id="audioPlayback" controls>
+        <source id="audioSource" type="audio/mp3" src="">
+      </audio>
+    </div>
+
+    <script>
+      var x = fs.readFile("test.txt", callback)
+      function loadFileAsText(){
+        var fileToLoad = document.getElementById("fileToLoad").files[0];
+
+        var fileReader = new FileReader();
+        fileReader.onload = function(fileLoadedEvent){
+            var textFromFileLoaded = fileLoadedEvent.target.result;
+            document.getElementById("inputTextToSave").value = textFromFileLoaded;
+        };
+
+        fileReader.readAsText(fileToLoad, "UTF-8");
+      }
+    </script>
+
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.610.0.min.js" id="awsSdk"></script>
+
+    <script type="text/javascript" id="authScript">
+        // Initialize the Amazon Cognito credentials provider
+        // <!-- Copy/paste the output from the Cognito console here-->
+	// Initialize the Amazon Cognito credentials provider
+	AWS.config.region = 'us-east-1'; // Region
+	AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+    	    IdentityPoolId: 'us-east-1:45c85766-addc-4c94-b175-56c9fed582a6',
+	});
+    </script>
+
+    <script type="text/javascript" id="pollyScript">
+      // Function invoked by button click
+      function speakText() {
+        document.getElementById('pollyResult').innerHTML = "Processing...";
+
+        // Create the JSON parameters for getSynthesizeSpeechUrl
+        var speechParams = {
+          OutputFormat: "mp3",
+          SampleRate: "16000",
+          Text: "",
+          TextType: "text",
+          VoiceId: "Joanna"
+        };
+        speechParams.Text = document.getElementById("pollyTextEntry").value;
+
+        // Create the Polly service object and presigner object
+        var polly = new AWS.Polly({apiVersion: '2016-06-10'});
+        var signer = new AWS.Polly.Presigner(speechParams, polly)
+
+        // Call the Polly API to get a presigned URL of the synthesized speech file
+        signer.getSynthesizeSpeechUrl(speechParams, function(error, url) {
+          if (error) {
+            document.getElementById('pollyResult').innerHTML = error;
+          } else {
+            document.getElementById('audioSource').src = url;
+            document.getElementById('audioPlayback').load();
+            document.getElementById('pollyResult').innerHTML = "Speech ready to play.";
+          }
+        });
+      }
+    </script>
+
+  </body>
+</html>
